@@ -1,1 +1,1 @@
-# slimpaylib
+# SLIMPAY node library

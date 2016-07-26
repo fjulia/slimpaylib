@@ -1,0 +1,13 @@
+DESIGN NOTES slimpaylib
+
+
+SIMPLE TRANSACTION
+	- Retrieve access token
+
+    - Retrieve entry point
+
+    - Sign a Mandate
+
+ 
+
+
