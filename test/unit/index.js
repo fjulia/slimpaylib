@@ -1,4 +1,4 @@
-import slimpaylib from '../../src/slimpaylib';
+import slimpaylib from '../../src/index.js';
 
 describe('slimpaylib', () => {
   describe('Greet function', () => {

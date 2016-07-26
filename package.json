@@ -2,7 +2,7 @@
   "name": "slimpaylib",
   "version": "0.0.1",
   "description": "Slimpay client library.",
-  "main": "index.js",
+  "main": "dist/slimpaylib.js",
   "scripts": {
     "test": "gulp",
     "lint": "gulp lint",
@@ -48,7 +48,7 @@
     "webpack-stream": "^3.1.0"
   },
   "babelBoilerplateOptions": {
-    "entryFileName": "src/index.js",
+    "entryFileName": "index.js",
     "mainVarName": "slimpaylib"
   }
 }
