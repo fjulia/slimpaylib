@@ -4,8 +4,11 @@ const del = require('del');
 const glob = require('glob');
 const path = require('path');
 const isparta = require('isparta');
-const webpack = require('webpack');
-const webpackStream = require('webpack-stream');
+const babel = require('gulp-babel');
+const gp_concat = require('gulp-concat'),
+    gp_rename = require('gulp-rename'),
+    gp_uglify = require('gulp-uglify'),
+    gp_sourcemaps = require('gulp-sourcemaps');
 
 const Instrumenter = isparta.Instrumenter;
 const mochaGlobals = require('./test/setup/.globals');
@@ -49,33 +52,17 @@ function lintGulpfile() {
 }
 
 function build() {
-  return gulp.src(path.join('src', config.entryFileName))
-    .pipe(webpackStream({
-      output: {
-        filename: exportFileName + '.js',
-        libraryTarget: 'umd',
-        library: config.mainVarName
-      },
-      // Add your own externals here. For instance,
-      // {
-      //   jquery: true
-      // }
-      // would externalize the `jquery` module.
-      externals: {},
-      module: {
-        loaders: [
-          { test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader' }
-        ]
-      },
-      devtool: 'source-map'
-    }))
-    .pipe(gulp.dest(destinationFolder))
-    .pipe($.filter(['**', '!**/*.js.map']))
-    .pipe($.rename(exportFileName + '.min.js'))
-    .pipe($.sourcemaps.init({ loadMaps: true }))
-    .pipe($.uglify())
-    .pipe($.sourcemaps.write('./'))
-    .pipe(gulp.dest(destinationFolder));
+  return gulp.src('src/**/*.js')
+        .pipe(babel({ 
+          presets: ['es2015'],
+          plugins: ["add-module-exports"] }))
+        .pipe(gp_sourcemaps.init())
+        .pipe(gp_concat('slimpaylib.js'))
+        .pipe(gulp.dest(destinationFolder))
+        .pipe(gp_rename('slimpaylib.min.js'))
+        .pipe(gp_uglify())
+        .pipe(gp_sourcemaps.write('./'))
+        .pipe(gulp.dest(destinationFolder)); 
 }
 
 function _mocha() {
@@ -143,9 +130,8 @@ function testBrowser() {
         loaders: [
           // This is what allows us to author in future JavaScript
           { test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader' },
-          // This allows the test setup scripts to load `package.json`
-          { test: /\.json$/, exclude: /node_modules/, loader: 'json-loader' }
-        ]
+        ],
+        
       },
       plugins: [
         // By default, webpack does `n=>n` compilation with entry files. This concatenates
