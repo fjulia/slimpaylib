@@ -6,7 +6,7 @@ export default class Slimpaylib{
     if(!options.app_secret) throw new Error("Missing app_secret");
     if(!options.creditor_reference) throw new Error("Missing creditor_reference");
     this.auth = new Auth(options);
-    this.payment = new PaymentManager(this.auth);
+    this.payment = new PaymentManager(this.auth,options);
   }
   
   test(){
@@ -16,7 +16,7 @@ export default class Slimpaylib{
   }
    
    sign_mandate(){
-     
+     this.payment.sign_mandate();
    }
 }
 

@@ -23,18 +23,20 @@ var Auth = function () {
 	}
 
 	_createClass(Auth, [{
-		key: 'do_auth',
-		value: function do_auth(next) {
+		key: 'getBearer',
+		value: function getBearer(next) {
+			var _this = this;
+
 			if (!this._is_token_valid()) {
 				this._retrieve_token(function (err) {
 					if (err) {
 						throw new Error('Authentication error');
 					} else {
-						next();
+						next(_this.token.access_token);
 					}
 				});
 			} else {
-				next();
+				next(this.token.access_token);
 			}
 		}
 	}, {
@@ -56,7 +58,6 @@ var Auth = function () {
 					pass: this.app_secret
 				}
 			}, function (err, res, body) {
-				console.log(body);
 				this.token = body;
 				this.renovation_date = new Date() / 1000;
 				callback(err);
@@ -68,7 +69,66 @@ var Auth = function () {
 }();
 
 exports.default = Auth;
-module.exports = exports['default'];
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var request = require('request');
+
+var Client = function () {
+	function Client(auth) {
+		_classCallCheck(this, Client);
+
+		this.auth = auth;
+	}
+
+	_createClass(Client, [{
+		key: 'do_get',
+		value: function do_get(url, callback) {
+			var options = {
+				url: url,
+				method: 'GET',
+				headers: {
+					'Authorization': 'Bearer ' + this.auth.token.access_token,
+					'Accept': 'application/hal+json',
+					'profile': 'https://api.slimpay.net/alps/v1'
+				}
+			};
+			request(options, function (err, res, body) {
+				if (err) console.log("do_get error", err);
+				callback(err, body);
+			});
+		}
+	}, {
+		key: 'do_post',
+		value: function do_post(url, object, callback) {
+			var options = {
+				url: url,
+				method: 'POST',
+				headers: {
+					'Authorization': 'Bearer ' + this.auth.token.access_token,
+					'Accept': 'application/hal+json',
+					'profile': 'https://api.slimpay.net/alps/v1'
+				},
+				form: object
+			};
+			request(options, function (err, res, body) {
+				if (err) console.log("do_post error", err);
+				callback(err, body);
+			});
+		}
+	}]);
+
+	return Client;
+}();
+
+exports.default = Client;
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -90,7 +150,6 @@ var halIndex = function halIndex() {
 };
 
 exports.default = halIndex;
-module.exports = exports['default'];
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -110,14 +169,22 @@ var Slimpaylib = function () {
     if (!options.app_secret) throw new Error("Missing app_secret");
     if (!options.creditor_reference) throw new Error("Missing creditor_reference");
     this.auth = new Auth(options);
+    this.payment = new PaymentManager(this.auth, options);
   }
 
   _createClass(Slimpaylib, [{
     key: "test",
     value: function test() {
+      var _this = this;
+
       this.auth.do_auth(function () {
-        console.log("test end");
+        console.log(_this.auth.token);
       });
+    }
+  }, {
+    key: "sign_mandate",
+    value: function sign_mandate() {
+      this.payment.sign_mandate();
     }
   }]);
 
@@ -125,4 +192,38 @@ var Slimpaylib = function () {
 }();
 
 exports.default = Slimpaylib;
-module.exports = exports["default"];
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var PaymentManager = function () {
+	function PaymentManager(auth, options) {
+		_classCallCheck(this, PaymentManager);
+
+		this.options = options;
+		this.client = new Client(auth);
+	}
+
+	_createClass(PaymentManager, [{
+		key: "sign_mandate",
+		value: function sign_mandate(callback) {
+			var entryUrl = this.options.sandbox_entrypoint_url;
+			//Retrieve entry point
+			this.client.do_get(entryUrl, function (links) {
+				console.log(links);
+				callback();
+			});
+			//Create orders
+		}
+	}]);
+
+	return PaymentManager;
+}();
+
+exports.default = PaymentManager;

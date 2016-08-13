@@ -2,4 +2,4 @@ var Sp = require('./dist/slimpaylib.js')
 var options = require('./config/secret');
 
 var slim =  new Sp(options);
-slim.test();
+slim.sign_mandate();
