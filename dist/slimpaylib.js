@@ -1,9 +1,5 @@
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -48,6 +44,7 @@ var Auth = function () {
 	}, {
 		key: '_retrieve_token',
 		value: function _retrieve_token(callback) {
+			var self = this;
 			request.post(this.oauth_url, {
 				form: {
 					grant_type: 'client_credentials',
@@ -58,8 +55,8 @@ var Auth = function () {
 					pass: this.app_secret
 				}
 			}, function (err, res, body) {
-				this.token = body;
-				this.renovation_date = new Date() / 1000;
+				self.token = JSON.parse(body);
+				self.renovation_date = new Date() / 1000;
 				callback(err);
 			});
 		}
@@ -67,13 +64,7 @@ var Auth = function () {
 
 	return Auth;
 }();
-
-exports.default = Auth;
 'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -91,49 +82,46 @@ var Client = function () {
 	_createClass(Client, [{
 		key: 'do_get',
 		value: function do_get(url, callback) {
-			var options = {
-				url: url,
-				method: 'GET',
-				headers: {
-					'Authorization': 'Bearer ' + this.auth.token.access_token,
-					'Accept': 'application/hal+json',
-					'profile': 'https://api.slimpay.net/alps/v1'
-				}
-			};
-			request(options, function (err, res, body) {
-				if (err) console.log("do_get error", err);
-				callback(err, body);
+			this.auth.getBearer(function (bearer) {
+				var options = {
+					url: url,
+					method: 'GET',
+					headers: {
+						'Authorization': 'Bearer ' + bearer,
+						'Accept': 'application/hal+json',
+						'profile': 'https://api.slimpay.net/alps/v1'
+					}
+				};
+				request(options, function (err, res, body) {
+					if (err) console.log("do_get error", err);
+					callback(err, body);
+				});
 			});
 		}
 	}, {
 		key: 'do_post',
 		value: function do_post(url, object, callback) {
-			var options = {
-				url: url,
-				method: 'POST',
-				headers: {
-					'Authorization': 'Bearer ' + this.auth.token.access_token,
-					'Accept': 'application/hal+json',
-					'profile': 'https://api.slimpay.net/alps/v1'
-				},
-				form: object
-			};
-			request(options, function (err, res, body) {
-				if (err) console.log("do_post error", err);
-				callback(err, body);
+			this.auth.getBearer(function (bearer) {
+				var options = {
+					url: url,
+					method: 'POST',
+					headers: {
+						'Authorization': 'Bearer ' + bearer,
+						'Accept': 'application/hal+json',
+						'profile': 'https://api.slimpay.net/alps/v1'
+					}
+				};
+				request(options, function (err, res, body) {
+					if (err) console.log("do_get error", err);
+					callback(err, body);
+				});
 			});
 		}
 	}]);
 
 	return Client;
 }();
-
-exports.default = Client;
 'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -148,8 +136,6 @@ var halIndex = function halIndex() {
 		url = global.entrypoint_url;
 	}
 };
-
-exports.default = halIndex;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -183,8 +169,8 @@ var Slimpaylib = function () {
     }
   }, {
     key: "sign_mandate",
-    value: function sign_mandate() {
-      this.payment.sign_mandate();
+    value: function sign_mandate(callback) {
+      this.payment.sign_mandate(callback);
     }
   }]);
 
@@ -192,11 +178,8 @@ var Slimpaylib = function () {
 }();
 
 exports.default = Slimpaylib;
+module.exports = exports["default"];
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -215,7 +198,7 @@ var PaymentManager = function () {
 		value: function sign_mandate(callback) {
 			var entryUrl = this.options.sandbox_entrypoint_url;
 			//Retrieve entry point
-			this.client.do_get(entryUrl, function (links) {
+			this.client.do_get(entryUrl, function (err, links) {
 				console.log(links);
 				callback();
 			});
@@ -225,5 +208,3 @@ var PaymentManager = function () {
 
 	return PaymentManager;
 }();
-
-exports.default = PaymentManager;

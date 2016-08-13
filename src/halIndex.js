@@ -1,6 +1,6 @@
 var request = require('request');
 
-export default class halIndex {
+class halIndex {
 	constructor() {
 		this.links = {};
 		var url = global.sandbox_entrypoint_url;

@@ -55,8 +55,7 @@ function build() {
   return gulp.src('src/**/*.js')
         .pipe(babel({ 
           presets: ['es2015'],
-          //plugins: ["add-module-exports"] }))
-          plugins: [] }))
+          plugins: ["add-module-exports"] }))
         .pipe(gp_sourcemaps.init())
         .pipe(gp_concat('slimpaylib.js'))
         .pipe(gulp.dest(destinationFolder))

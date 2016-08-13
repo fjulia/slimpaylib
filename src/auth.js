@@ -1,6 +1,6 @@
 var request = require('request');
 
-export default class Auth {
+class Auth {
 	constructor(options) {
 		this.app_name = options.app_name;
 		this.app_secret = options.app_secret;
@@ -31,6 +31,7 @@ export default class Auth {
 	}
 
 	_retrieve_token(callback) {
+		var self = this;
 		request.post(this.oauth_url, {
 			form: {
 				grant_type: 'client_credentials',
@@ -41,8 +42,8 @@ export default class Auth {
 				pass: this.app_secret
 			}
 		}, function (err, res, body) {
-			this.token = body;
-			this.renovation_date = new Date() / 1000;
+			self.token = JSON.parse(body);
+			self.renovation_date = new Date() / 1000;
 			callback(err);
 		})
 	}

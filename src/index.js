@@ -15,8 +15,8 @@ export default class Slimpaylib{
     });
   }
    
-   sign_mandate(){
-     this.payment.sign_mandate();
+   sign_mandate(callback){
+     this.payment.sign_mandate(callback);
    }
 }
 
