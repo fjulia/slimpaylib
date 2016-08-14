@@ -71,6 +71,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var request = require('request');
+//require('request-debug')(request);
 
 var Client = function () {
 	function Client(auth) {
@@ -108,8 +109,10 @@ var Client = function () {
 					headers: {
 						'Authorization': 'Bearer ' + bearer,
 						'Accept': 'application/hal+json',
-						'profile': 'https://api.slimpay.net/alps/v1'
-					}
+						'profile': 'https://api.slimpay.net/alps/v1',
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(object)
 				};
 				request(options, function (err, res, body) {
 					if (err) console.log("do_get error", err);
@@ -169,8 +172,8 @@ var Slimpaylib = function () {
     }
   }, {
     key: "sign_mandate",
-    value: function sign_mandate(callback) {
-      this.payment.sign_mandate(callback);
+    value: function sign_mandate(id_user, callback) {
+      this.payment.sign_mandate(id_user, callback);
     }
   }]);
 
@@ -195,14 +198,53 @@ var PaymentManager = function () {
 
 	_createClass(PaymentManager, [{
 		key: "sign_mandate",
-		value: function sign_mandate(callback) {
+		value: function sign_mandate(id_user, callback) {
+			var _this = this;
+
 			var entryUrl = this.options.sandbox_entrypoint_url;
+			var creditor = this.options.creditor_reference;
+			var subscriber = id_user;
 			//Retrieve entry point
 			this.client.do_get(entryUrl, function (err, links) {
-				console.log(links);
-				callback();
+				var lnk = JSON.parse(links);
+				var mandate = _this._createSignMandateRequest(creditor, subscriber);
+				_this.client.do_post(lnk._links['https://api.slimpay.net/alps#create-orders'].href, mandate, function (err, body) {
+					if (err) console.log("ERROR: Failed post mandate", err);
+					console.log(body);
+					callback();
+				});
 			});
 			//Create orders
+		}
+	}, {
+		key: "_createSignMandateRequest",
+		value: function _createSignMandateRequest(creditor, subscriber) {
+			var res = {
+				creditor: { reference: creditor },
+				subscriber: { reference: subscriber.id_user },
+				items: [{
+					"autoGenReference": true,
+					"type": "signMandate",
+					"mandate": {
+						"signatory": {
+							//						"honorificPrefix": "Mr",
+							"familyName": "Doe",
+							"givenName": "John",
+							//						"telephone": "+33612345678",
+							//						"email": "john.doe@gmail.com",
+							"billingAddress": {
+								"street1": "27 rue des fleurs",
+								//							"street2": "Bat 2",
+								"postalCode": "75008",
+								"city": "Paris",
+								"country": "FR"
+							}
+						}
+					}
+				}],
+				started: true
+			};
+			return res;
 		}
 	}]);
 
